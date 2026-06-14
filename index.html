@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DeGroote MBA Year 2 — Schedule Planner 2026–2027</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --maroon:#7A1F1F;--maroon-dk:#5C1515;--gold:#C49A1A;
+  --bg:#1A1A1A;--bg2:#252525;--bg3:#2E2E2E;--bg4:#383838;
+  --bd:rgba(255,255,255,0.08);--bd2:rgba(255,255,255,0.15);
+  --tx:#F0EDE8;--tx2:#A09C96;--tx3:#666260;
+  --c-req:#C04040;--c-req-bg:rgba(192,64,64,0.2);
+  --ROW:44;/* px per 30min slot — also set in JS */
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:13px;background:var(--bg);color:var(--tx);height:100vh;display:flex;flex-direction:column;overflow:hidden}
+
+/* ── HEADER ── */
+.hdr{background:var(--maroon-dk);border-bottom:3px solid var(--gold);padding:10px 18px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:10px;flex-wrap:wrap}
+.hdr h1{font-size:14px;font-weight:600;color:#fff;margin-bottom:1px}
+.hdr .sub{font-size:10.5px;color:rgba(255,255,255,.45)}
+.term-tabs{display:flex;gap:3px;background:rgba(0,0,0,.3);padding:3px;border-radius:7px}
+.tbt{padding:4px 14px;border-radius:5px;border:none;background:transparent;color:rgba(255,255,255,.5);font-size:12px;font-weight:500;cursor:pointer;transition:all .12s}
+.tbt.active{background:rgba(255,255,255,.15);color:#fff}
+
+/* ── MAIN LAYOUT ── */
+.body{display:flex;flex:1;overflow:hidden;min-height:0}
+
+/* ── SIDEBAR ── */
+.sb{width:265px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--bd);display:flex;flex-direction:column;overflow:hidden}
+.sb-inner{flex:1;overflow-y:auto;overflow-x:hidden}
+.sb-inner::-webkit-scrollbar{width:4px}
+.sb-inner::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:2px}
+.sb-sec{padding:11px 11px 7px;border-bottom:1px solid var(--bd)}
+.sb-sec:last-child{border-bottom:none}
+.sec-lbl{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--tx3);margin-bottom:6px;display:flex;align-items:center;justify-content:space-between}
+.sec-lbl em{font-size:9px;font-weight:400;font-style:normal;text-transform:none;letter-spacing:0;color:var(--tx3)}
+
+/* Spec radio */
+.spec-row{display:flex;align-items:flex-start;gap:7px;padding:5px 6px;border-radius:5px;cursor:pointer;transition:background .1s;margin-bottom:1px}
+.spec-row:hover{background:var(--bg4)}
+.spec-row input{accent-color:var(--gold);margin-top:3px;flex-shrink:0;cursor:pointer}
+.spec-name{font-size:12px;color:var(--tx);line-height:1.3}
+.spec-sub{font-size:9.5px;color:var(--tx3);margin-top:1px}
+
+/* Required list */
+.req-item{display:flex;align-items:flex-start;gap:7px;padding:4px 6px;margin-bottom:1px}
+.req-dot{width:7px;height:7px;border-radius:50%;background:var(--c-req);flex-shrink:0;margin-top:3px}
+.req-name{font-size:11.5px;color:var(--tx);line-height:1.3}
+.req-meta{font-size:9.5px;color:var(--tx3);margin-top:1px}
+
+/* Elective items */
+.el-item{display:flex;align-items:flex-start;gap:7px;padding:5px 6px;border-radius:5px;margin-bottom:1px;cursor:pointer;transition:background .1s}
+.el-item:hover{background:var(--bg4)}
+.el-item input[type=checkbox]{flex-shrink:0;margin-top:2px;cursor:pointer;width:13px;height:13px}
+.el-body{flex:1;min-width:0}
+.el-name{font-size:11.5px;color:var(--tx);line-height:1.3}
+.el-meta{font-size:9.5px;color:var(--tx3);margin-top:1px}
+.el-badge{display:inline-block;font-size:9px;padding:1px 5px;border-radius:3px;margin-top:2px;font-weight:500}
+.el-badge.warn{background:rgba(200,80,60,.18);color:#E07060;border:1px solid rgba(200,80,60,.35)}
+.el-badge.eve{background:rgba(130,70,190,.18);color:#B890D8;border:1px solid rgba(130,70,190,.3)}
+.el-badge.off{background:rgba(80,80,80,.2);color:#787878;border:1px solid rgba(80,80,80,.3)}
+
+
+.cohort-select{margin-top:4px;width:100%;background:var(--bg3);color:var(--tx2);border:1px solid var(--bd2);border-radius:4px;font-size:10px;padding:3px 5px;outline:none}
+.cohort-select:focus{border-color:rgba(196,154,26,.55)}
+.ftr-note.warn{color:#E0A050}
+
+/* ── CALENDAR ── */
+.cal-wrap{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.cal-head{display:grid;grid-template-columns:54px repeat(5,1fr);background:var(--bg2);border-bottom:1px solid var(--bd);flex-shrink:0}
+.cal-dh{padding:7px 4px;text-align:center;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--tx3)}
+.cal-scroll{flex:1;overflow-y:auto;overflow-x:hidden;position:relative}
+.cal-scroll::-webkit-scrollbar{width:6px}
+.cal-scroll::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:3px}
+
+/* The grid: two layers stacked */
+.cal-grid-wrap{position:relative}
+/* Layer 1: background lines */
+.cal-bg{display:grid;grid-template-columns:54px repeat(5,1fr)}
+.bg-tl{display:flex;align-items:flex-start;justify-content:flex-end;padding-right:7px}
+.bg-tl span{font-size:9px;color:var(--tx3);position:relative;top:-5px}
+.bg-cell{border-top:1px solid rgba(255,255,255,.04);border-left:1px solid rgba(255,255,255,.03)}
+.bg-cell.hr{border-top-color:rgba(255,255,255,.09)}
+/* Layer 2: course blocks absolutely positioned */
+.cal-blocks{position:absolute;top:0;left:54px;right:0;bottom:0;pointer-events:none}
+.cal-day-col{position:absolute;top:0;bottom:0;pointer-events:none}
+
+/* Course block */
+.blk{position:absolute;left:2px;right:2px;border-radius:5px;padding:4px 22px 4px 7px;overflow:hidden;cursor:default;transition:filter .1s;z-index:2;pointer-events:all;border-left-width:3px;border-left-style:solid;border-top:1px solid transparent;border-right:1px solid transparent;border-bottom:1px solid transparent}
+.blk:hover{filter:brightness(1.18);z-index:20}
+.blk.req{background:var(--c-req-bg);border-left-color:var(--c-req);border-color:var(--c-req);border-left-width:3px}
+/* Elective color classes */
+.ec0{background:rgba(74,143,196,.18);border-color:#4A8FC4;border-left-width:3px}
+.ec1{background:rgba(61,168,124,.17);border-color:#3DA87C;border-left-width:3px}
+.ec2{background:rgba(196,154,58,.17);border-color:#C49A3A;border-left-width:3px}
+.ec3{background:rgba(160,108,196,.17);border-color:#A06CC4;border-left-width:3px}
+.ec4{background:rgba(74,168,168,.17);border-color:#4AA8A8;border-left-width:3px}
+.ec5{background:rgba(196,106,58,.17);border-color:#C46A3A;border-left-width:3px}
+.ec6{background:rgba(106,154,196,.17);border-color:#6A9AC4;border-left-width:3px}
+.ec7{background:rgba(168,196,74,.17);border-color:#A8C44A;border-left-width:3px}
+.blk-code{font-size:9.5px;font-weight:700;font-family:'SF Mono',monospace;opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.blk-name{font-size:10.5px;font-weight:500;line-height:1.25;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;margin-top:1px}
+.blk-time{font-size:9px;opacity:.5;margin-top:2px;white-space:nowrap}
+
+/* Info button inside block */
+.blk-i{position:absolute;top:4px;right:4px;width:14px;height:14px;border-radius:50%;border:1px solid rgba(255,255,255,.28);background:rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;font-size:8.5px;font-style:italic;font-weight:700;color:rgba(255,255,255,.65);cursor:pointer;z-index:5;transition:all .1s}
+.blk-i:hover{background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.7);color:#fff}
+
+/* ── FOOTER ── */
+.ftr{display:flex;gap:14px;padding:5px 14px;background:var(--bg2);border-top:1px solid var(--bd);font-size:11px;color:var(--tx3);flex-shrink:0;align-items:center;flex-wrap:wrap}
+.ftr-item{display:flex;align-items:center;gap:5px}
+.ftr-dot{width:7px;height:7px;border-radius:50%}
+.ftr-n{color:var(--tx);font-weight:600}
+.ftr-note{margin-left:auto;font-size:10px}
+.ftr-note.ok{color:#3DA87C}
+
+/* ── POPOVER ── */
+.pop{position:fixed;background:#2A2A2C;border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:13px;width:285px;z-index:9999;box-shadow:0 10px 40px rgba(0,0,0,.7);opacity:0;transform:translateY(5px);transition:opacity .14s,transform .14s;pointer-events:none}
+.pop.show{opacity:1;transform:translateY(0);pointer-events:auto}
+.pop-code{font-size:11px;font-weight:700;font-family:'SF Mono',monospace;margin-bottom:3px}
+.pop-title{font-size:13px;font-weight:600;color:var(--tx);margin-bottom:9px;line-height:1.3}
+.pop-row{display:flex;gap:7px;margin-bottom:5px}
+.pop-lbl{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--tx3);width:66px;flex-shrink:0;padding-top:1px}
+.pop-val{font-size:11.5px;color:var(--tx2);line-height:1.45;flex:1}
+.pop-div{height:1px;background:rgba(255,255,255,.07);margin:8px 0}
+.pop-desc{font-size:11.5px;color:var(--tx2);line-height:1.55}
+.pop-note{font-size:10.5px;color:#C49A3A;margin-top:6px;line-height:1.45}
+.pop-tag{display:inline-block;font-size:10px;padding:2px 7px;border-radius:4px;margin-top:7px;font-weight:500}
+.pop-tag.req{background:rgba(192,64,64,.25);color:#E09090;border:1px solid rgba(192,64,64,.4)}
+.pop-tag.spec{background:rgba(74,143,196,.22);color:#90C0E0;border:1px solid rgba(74,143,196,.4)}
+.pop-tag.open{background:rgba(92,122,92,.22);color:#90C090;border:1px solid rgba(92,122,92,.4)}
+.pop-link{display:block;font-size:10px;color:#6AAAF0;text-decoration:none;margin-top:7px}
+.pop-link:hover{text-decoration:underline}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div>
+    <h1>DeGroote MBA — Year 2 Course Planner</h1>
+    <div class="sub">Fall 2026 &amp; Winter 2027 · Full-Time (No Co-op) · Ron Joyce Centre, Burlington</div>
+  </div>
+  <div class="term-tabs">
+    <button class="tbt active" onclick="setTerm('fall')">Fall 2026</button>
+    <button class="tbt" onclick="setTerm('winter')">Winter 2027</button>
+  </div>
+</div>
+
+<div class="body">
+  <div class="sb">
+    <div class="sb-inner" id="sb-inner">
+      <div class="sb-sec">
+        <div class="sec-lbl">Specialization <em>required courses auto-added</em></div>
+        <div id="spec-list"></div>
+      </div>
+      <div class="sb-sec">
+        <div class="sec-lbl">Required courses <em>always on calendar</em></div>
+        <div id="req-list"></div>
+      </div>
+      <div class="sb-sec">
+        <div class="sec-lbl">Specialization electives <em id="spec-el-hint"></em></div>
+        <div id="spec-el-list"></div>
+      </div>
+      <div class="sb-sec">
+        <div class="sec-lbl">Other open electives</div>
+        <div id="open-el-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cal-wrap">
+    <div class="cal-head">
+      <div class="cal-dh"></div>
+      <div class="cal-dh">Mon</div>
+      <div class="cal-dh">Tue</div>
+      <div class="cal-dh">Wed</div>
+      <div class="cal-dh">Thu</div>
+      <div class="cal-dh">Fri</div>
+    </div>
+    <div class="cal-scroll" id="cal-scroll">
+      <div class="cal-grid-wrap" id="cal-grid-wrap">
+        <div class="cal-bg" id="cal-bg"></div>
+        <div class="cal-blocks" id="cal-blocks"></div>
+      </div>
+    </div>
+    <div class="ftr">
+      <div class="ftr-item"><div class="ftr-dot" style="background:var(--c-req)"></div>Spec required: <span class="ftr-n" id="cnt-req">0</span></div>
+      <div class="ftr-item"><div class="ftr-dot" style="background:#4A8FC4"></div>Electives selected: <span class="ftr-n" id="cnt-el">0</span></div>
+      <div class="ftr-note" id="ftr-note"></div>
+    </div>
+  </div>
+</div>
+
+<div class="pop" id="pop"></div>
+
+<script>
+// ════════════════════════════════════════════════════
+// CONSTANTS
+// ════════════════════════════════════════════════════
+const ROW_H   = 44;   // px per 30-min slot
+const SLOTS   = 30;   // 8:00 AM → 11:00 PM
+const GS_H    = 8;    // grid start hour
+const GS_MIN  = 0;    // grid start minute
+const GS_MINS = GS_H * 60 + GS_MIN;
+const DAYS    = ['MON','TUE','WED','THU','FRI'];
+const ECOLORS = ['ec0','ec1','ec2','ec3','ec4','ec5','ec6','ec7'];
+
+// ════════════════════════════════════════════════════
+// COURSE DATABASE
+// Sources: mbastudent.degroote.mcmaster.ca/descriptions/*
+//          ecampusontario.pressbooks.pub MBA Handbook 2025-26
+// ════════════════════════════════════════════════════
+const COURSES = {
+  // ── SHARED REQUIRED (every specialization) ──────
+  P700:{name:'Managing Geopolitical & Social Risk',prereq:'5× 600-level courses (Level 1 completion)',desc:'Examines domestic and international institutions (IMF, WTO, CUSMA) and forces shaping business environments. Topics: the role of government, culture and business ethics, international trade and investment strategy, foreign exchange risk, and navigating political risk.',instructor:'TBA (past: F. Neville, P. Constantinou)',group:true,exam:true,url:'https://mbastudent.degroote.mcmaster.ca/descriptions/p700/',note:'Required for every specialization. Fall/Winter cohorts available; select C01 or evening C02 where offered.'},
+  P720:{name:'Strategic Management',prereq:'Level 1 completion or instructor permission',desc:'Capstone MBA course integrating all disciplines. Covers strategy formulation/implementation, competitive analysis, corporate vs. business-unit planning, and organizational change. Heavy case load; recommended for final academic term.',instructor:'TBA (past: B. McKnight, C. Chow, G. Calic)',group:true,exam:true,url:'https://mbastudent.degroote.mcmaster.ca/descriptions/p720/',note:'Required for every specialization. Recommended as last course of MBA. Fall/Winter cohorts available; select C01 or evening C02 where offered.'},
+
+  // ── HSM REQUIRED ────────────────────────────────
+  C711:{name:'Health Economics & Evaluation',prereq:'C721 (antireq: C710) — plan term order',desc:'Applies economic principles to health policy questions: demand and supply of healthcare and insurance, system financing, payment schemes, pharmaceutical regulation, cost-effectiveness analysis (CEA), QALYs, and value-for-money frameworks. Strongly quantitative.',instructor:'TBA (past: T. Maity, C. Longo, B. Bereza)',group:true,exam:true,url:'https://mbastudent.degroote.mcmaster.ca/descriptions/c711/',note:'⚠ C721 is a PREREQUISITE for C711. Take C721 in Fall, then C711 in Winter — or get instructor permission for simultaneous enrollment.'},
+  C721:{name:'Health Policy Analysis for Managers',prereq:'None listed',desc:'Dynamics of health policymaking and the impact of policy changes on organizations. Covers stakeholder mapping, government decision processes, legislative analysis, regulatory frameworks, and advocacy strategies for health sector managers.',instructor:'TBA',group:true,exam:false,url:'https://mbastudent.degroote.mcmaster.ca/descriptions/c721/',note:'HSM Required. Winter 2027 offering is C01 Wed 11:30–14:20. Check advisor sequencing with C711.'},
+
+  // ── HSM ELECTIVES ────────────────────────────────
+  C727:{name:'Pharma/Biotech Business Issues',prereq:'None listed',desc:'Strategic, regulatory, and commercial challenges in pharma and biotech industries. Covers drug development pipeline economics, IP strategy, pricing, market access, and public–private partnerships in healthcare innovation.',instructor:'TBA',group:true,exam:false,url:'https://mbastudent.degroote.mcmaster.ca/descriptions/c727/',note:'HSM Elective. Fall only (Thu 8:30–11:20).'},
+  C736:{name:'Quality Mgmt in Health Services',prereq:'None listed',desc:'Quality improvement frameworks (Lean, Six Sigma, Balanced Scorecard, PDSA) applied to healthcare organizations. Topics: patient safety culture, accreditation, incident analysis, root cause analysis, and building high-reliability organizations.',instructor:'TBA',group:true,exam:false,url:'https://mbastudent.degroote.mcmaster.ca/descriptions/c736/',note:'HSM Elective. Fall evening section only (Thu 19:00–21:50). No daytime conflict risk.'},
+  C715:{name:'Health Care Funding & Resource Allocation',prereq:'None listed',desc:'Health system financing models and allocation mechanisms. Global comparisons (Canada, US, UK, Europe), capitation, DRGs, global budgets, needs-based allocation, priority-setting frameworks, and equity in resource distribution.',instructor:'TBA',group:true,exam:false,url:'https://mbastudent.degroote.mcmaster.ca/descriptions/c715/',note:'HSM Elective. Winter only (Thu 8:30–11:20).'},
+  C722:{name:'Management of Population Health',prereq:'None listed',desc:'Frameworks for improving health outcomes at population scale. Social determinants of health, chronic disease management programs, health equity, community health partnership models, and intersectoral collaboration.',instructor:'TBA',group:true,exam:false,url:'https://mbastudent.degroote.mcmaster.ca/descriptions/c722/',note:'HSM Elective. Winter 2027 offering is C01 Thu 11:30–14:20.'},
+  C755:{name:'Analytics & Decision-Making in Healthcare',prereq:'None listed',desc:'Quantitative and data analytics tools applied to health management decisions. Performance dashboards, outcome measurement, evidence-based management, clinical metrics, and decision-support systems for health administrators.',instructor:'TBA',group:true,exam:false,url:'https://mbastudent.degroote.mcmaster.ca/descriptions/c755/',note:'HSM Elective. Winter 2027 offering is evening C01 Wed 19:00–21:50.'},
+
+  // ── FINANCE ELECTIVES ────────────────────────────
+  F701:{name:'Alternative Investments & Portfolio Mgmt',prereq:'F610',desc:'Portfolio theory applied to alternative assets: hedge funds, private equity, real assets, commodities, infrastructure. Risk–return analysis, portfolio construction, performance attribution, manager selection, and regulatory context. CFA® exam preparation.',instructor:'TBA',group:true,exam:true,url:'https://mbastudent.degroote.mcmaster.ca/descriptions/f701/',note:'Finance Elective (CFA*). Fall Thu 8:30–11:20.'},
+  F712:{name:'Applied Corporate Finance',prereq:'F610',desc:'Advanced corporate finance applications: capital budgeting, real options analysis, capital structure decisions, dividend policy, working capital management, and M&A valuation. Case-intensive with financial modelling.',instructor:'TBA',group:true,exam:true,url:'https://mbastudent.degroote.mcmaster.ca/descriptions/f712/',note:'Finance & SBV Elective. Winter evening only (Thu 19:00–21:50).'},
+  F713:{name:'Security Analysis',prereq:'F610',desc:'Fundamental equity analysis: industry analysis, financial statement review, earnings forecasting, intrinsic value estimation (DCF, EV multiples, residual income), and portfolio application. CFA® exam preparation.',instructor:'TBA',group:true,exam:true,url:'https://mbastudent.degroote.mcmaster.ca/descriptions/f713/',note:'Finance & SBV Elective. Winter 2027 offering is evening C01 Mon 19:00–21:50.'},
+  F717:{name:'Financial Statement Analysis',prereq:'A610',desc:'Deep analysis of financial statements for investment and credit decisions. Topics: earnings quality, accrual accounting, forecasting earnings, equity valuation, detecting financial manipulation (Beneish M-Score). Core CFA® preparation.',instructor:'TBA',group:true,exam:true,url:'https://mbastudent.degroote.mcmaster.ca/descriptions/f717/',note:'Finance Elective (CFA*). Fall Mon 14:30. Winter: evening section (listed as A750/F717).'},
+  F721:{name:'Mergers, Acquisitions & Corporate Control',prereq:'F610',desc:'Valuation and strategy in M&A: deal structuring, due diligence, synergy analysis, hostile takeovers, defensive strategies, regulatory hurdles, and post-merger integration. Uses real transaction case studies and live deal analysis.',instructor:'TBA',group:true,exam:true,url:'https://mbastudent.degroote.mcmaster.ca/descriptions/f721/',note:'Finance & SBV Elective. Fall Wed 8:30–11:20.'},
+  F722:{name:'Market Trading & Risk Mgmt with Options',prereq:'F610',desc:'Options pricing theory (Black-Scholes, binomial models), trading strategies (spreads, straddles, collars), risk management with derivatives, hedging applications, and market microstructure. Includes trading simulations.',instructor:'TBA',group:false,exam:true,url:'https://mbastudent.degroote.mcmaster.ca/descriptions/f722/',note:'Finance Elective. Winter Thu 11:30–14:20.'},
+  F724:{name:'Venture Capital & Private Equity',prereq:'F610',desc:'The PE/VC investment cycle: fundraising, deal sourcing, due diligence, valuation, deal structuring, term sheets, monitoring, and exit (IPO, M&A, secondary). VC vs. buyout strategies and entrepreneurial finance.',instructor:'TBA',group:true,exam:true,url:'https://mbastudent.degroote.mcmaster.ca/descriptions/f724/',note:'Finance & SBV Elective. Fall Wed 14:30–17:20.'},
+  F725:{name:'Personal Financial Management',prereq:'None',desc:'Financial planning for individuals and clients: budgeting, tax planning, investment management, insurance products, retirement planning (RRSP, TFSA, pension), and estate planning in the Canadian context.',instructor:'TBA',group:false,exam:true,url:'https://mbastudent.degroote.mcmaster.ca/descriptions/f725/',note:'Finance Elective. Winter 2027 offering is C01 Mon 14:30–17:20.'},
+  F733:{name:'Financial Risk Management',prereq:'F610',desc:'Enterprise risk management: credit risk, market risk, operational risk, liquidity risk, regulatory capital requirements (Basel III/IV). Quantitative risk modelling, VaR, stress testing, and risk governance frameworks.',instructor:'TBA',group:true,exam:true,url:'https://mbastudent.degroote.mcmaster.ca/descriptions/f733/',note:'Finance Elective. Fall evening only (Thu 19:00–21:50).'},
+  F735:{name:'Financial Modelling',prereq:'F610',desc:'Building professional financial models in Excel: DCF models, LBO models, merger models, scenario/sensitivity analysis. Best practices in model design, error-checking, and presentation to stakeholders.',instructor:'TBA',group:false,exam:false,url:'https://mbastudent.degroote.mcmaster.ca/descriptions/f735/',note:'Finance & SBV Elective. Winter 2027 offering is C01 Wed 11:30–14:20.'},
+  F736:{name:'Ethics & Professional Practice in Finance',prereq:'None',desc:'Ethical standards and professional obligations in finance: CFA Institute Code and Standards, fiduciary duty, conflicts of interest, regulatory frameworks (OSC, IIROC), and case studies of financial misconduct. CFA® exam preparation.',instructor:'TBA',group:false,exam:false,url:'https://mbastudent.degroote.mcmaster.ca/descriptions/f736/',note:'Finance Elective (CFA*). Fall Mon 11:30–14:20.'},
+  F741:{name:'Introduction to FinTech',prereq:'None',desc:'Survey of financial technology: blockchain and cryptocurrencies, AI/ML in finance, robo-advisors, digital payments, open banking, lending platforms, regtech, and InsurTech. Strategic implications for financial institutions and incumbents.',instructor:'TBA',group:true,exam:false,url:'https://mbastudent.degroote.mcmaster.ca/descriptions/f741/',note:'Finance Elective. Fall Tue 11:30. Evening section also available (Wed 19:00).'},
+  F743:{name:'Big Data in Finance',prereq:'O610',desc:'Machine learning and big data analytics for financial applications: algorithmic trading, NLP/sentiment analysis, credit scoring models, fraud detection, and quantitative investment strategies. Python-based.',instructor:'TBA',group:true,exam:false,url:'https://mbastudent.degroote.mcmaster.ca/descriptions/f743/',note:'Finance Elective. Fall evening only (Wed 19:00–21:50).'},
+
+  // ── SBV REQUIRED ─────────────────────────────────
+  V700:{name:'Strategic Business Analysis & Valuation',prereq:'Level 1 completion',desc:'Foundation course for the CBV designation pathway. Business valuation theory and practice: income, market, and asset-based approaches; enterprise vs. equity value; financial statement normalization; valuation report writing. Prepares for CICBV Introductory Course exam.',instructor:'TBA',group:true,exam:true,url:'https://mbastudent.degroote.mcmaster.ca/descriptions/v700/',note:'SBV Required. Fall only, evening (Thu 19:00–21:50). Gateway to CBV designation.'},
+  V704:{name:'Advanced Strategic Business Valuation',prereq:'V700',desc:'Advanced valuation topics: intangible asset valuation, IP, complex capital structures, shareholder dispute contexts, fair value for financial reporting (IFRS 13), and expert witness role. Prepares for CICBV Intermediate Course exam.',instructor:'TBA',group:true,exam:true,url:'https://mbastudent.degroote.mcmaster.ca/descriptions/v704/',note:'SBV Required. Fall only, evening (Wed 19:00–21:50). Prereq: V700 (must be taken simultaneously or prior).'},
+
+  // ── BUSINESS ANALYTICS REQUIRED ──────────────────
+  K723:{name:'Data Mining & Business Intelligence',prereq:'O610',desc:'Data mining techniques for BI: classification trees, clustering, association rules, and text mining. Uses SAS Enterprise Miner or Python. Business applications in customer analytics, risk modelling, and fraud detection.',instructor:'TBA',group:true,exam:false,url:'https://mbastudent.degroote.mcmaster.ca/descriptions/k723/',note:'BA Required. Fall evening only (Mon 19:00–21:50). ⚠ Conflicts with K725 and M727.'},
+  O701:{name:'Modelling & Prescriptive Analytics',prereq:'O610',desc:'Optimization and prescriptive analytics for managerial decisions. Linear and integer programming, network models, stochastic optimization, and Excel Solver/Python PuLP. Applied to supply chain, scheduling, and resource allocation.',instructor:'TBA',group:true,exam:true,url:'https://mbastudent.degroote.mcmaster.ca/descriptions/o701/',note:'BA Required. Fall Mon 11:30–14:20.'},
+  O711:{name:'Predictive Modelling & Analytics',prereq:'O610',desc:'Statistical and ML models for prediction: regression, classification, decision trees, neural networks, time series forecasting, and cross-validation. Applied with Python/R and real business datasets.',instructor:'TBA',group:true,exam:false,url:'https://mbastudent.degroote.mcmaster.ca/descriptions/o711/',note:'BA Required. Winter evening only (Tue 19:00–21:50).'},
+
+  // ── MARKETING REQUIRED ───────────────────────────
+  M731:{name:'Marketing Research',prereq:'M610',desc:'Research design for marketing decisions: surveys, experiments, focus groups, conjoint analysis, and secondary data. Statistical analysis of marketing data, research report writing, and translating findings into strategic recommendations.',instructor:'TBA',group:true,exam:true,url:'https://mbastudent.degroote.mcmaster.ca/descriptions/m731/',note:'Marketing Required. Fall evening only (Wed 19:00–21:50).'},
+
+  // ── MARKETING ELECTIVES ──────────────────────────
+  M724:{name:'Innovation & New Products',prereq:'M610',desc:'New product development process: ideation, concept testing, business analysis, prototyping, and market launch. Design thinking, stage-gate models, innovation metrics, open innovation, and disruptive vs. sustaining innovation.',instructor:'TBA',group:true,exam:false,url:'https://mbastudent.degroote.mcmaster.ca/descriptions/m724/',note:'Marketing Elective. Fall evening only (Tue 19:00–21:50).'},
+  M727:{name:'Marketing Communications',prereq:'M610',desc:'Integrated marketing communications: advertising, PR, digital media, social media, content marketing, and sponsorship. Campaign planning, media buying, brand messaging frameworks, and measuring IMC effectiveness.',instructor:'TBA',group:true,exam:false,url:'https://mbastudent.degroote.mcmaster.ca/descriptions/m727/',note:'Marketing Elective. Fall evening only (Mon 19:00–21:50). ⚠ Conflicts with K723 and K725.'},
+  M732:{name:'Consumer Behaviour',prereq:'M610',desc:'Psychological and social influences on consumer decisions: perception, motivation, attitudes, decision-making heuristics, cultural influences, and behavioural economics applied to marketing strategy and brand management.',instructor:'TBA',group:true,exam:true,url:'https://mbastudent.degroote.mcmaster.ca/descriptions/m732/',note:'Marketing Elective. Not listed for Winter 2027 in the current course description page.'},
+  M733:{name:'Marketing Analytics',prereq:'M610',desc:'Data-driven marketing: customer segmentation, CLV analysis, attribution modelling, A/B testing, predictive analytics for marketing mix. Uses Python/R and real marketing datasets from digital and traditional channels.',instructor:'TBA',group:true,exam:false,url:'https://mbastudent.degroote.mcmaster.ca/descriptions/m733/',note:'Marketing & BA Elective. Fall Wed 11:30. ⚠ Conflicts with P720 in Fall.'},
+  M734:{name:'Strategic Marketing Analysis',prereq:'M610',desc:'Advanced marketing strategy: market positioning, competitive dynamics, pricing strategy, product portfolio management, and go-to-market execution. Case-intensive with applied industry projects.',instructor:'TBA',group:true,exam:true,url:'https://mbastudent.degroote.mcmaster.ca/descriptions/m734/',note:'Marketing & BA Elective. Winter Tue 14:30–17:20.'},
+  M740:{name:'Corporate Reputation & Brand Mgmt',prereq:'M610',desc:'Building and managing corporate reputation and brand equity. Crisis communication, reputation risk management, brand architecture, employer branding, and sustainability/ESG communications.',instructor:'TBA',group:true,exam:false,url:'https://mbastudent.degroote.mcmaster.ca/descriptions/m740/',note:'Marketing Elective. Winter 2027 offering is C01 Wed 11:30–14:20.'},
+  M752:{name:'Digital Marketing',prereq:'M610',desc:'Digital marketing strategy and execution: SEO/SEM, social media marketing, email marketing, content strategy, programmatic advertising, and campaign analytics. Hands-on campaign management and reporting.',instructor:'TBA',group:true,exam:false,url:'https://mbastudent.degroote.mcmaster.ca/descriptions/m752/',note:'Marketing Elective. Fall C01 Tue 14:30–17:20; Winter 2027 evening C01 Wed 19:00–21:50.'},
+
+  // ── OPEN / CROSS-SPEC ELECTIVES ──────────────────
+  B712:{name:'Managerial Negotiations',prereq:'None',desc:'Negotiation theory and applied practice: distributive vs. integrative negotiation, multi-party negotiations, cross-cultural dynamics, ethical dilemmas, and BATNA analysis. Heavy use of role-play simulations and debrief sessions.',instructor:'TBA',group:false,exam:false,url:'https://mbastudent.degroote.mcmaster.ca/descriptions/b712/',note:'Open Elective. Fall C01 Mon 11:30–14:20; Winter 2027 evening C01 Mon 19:00–21:50.'},
+  B715:{name:'Leadership',prereq:'B610',desc:'Leadership theory and practice: trait, behavioural, situational, and transformational models. 360° assessment tools, coaching, influence without authority, change leadership, and structured personal leadership development plans.',instructor:'TBA',group:true,exam:false,url:'https://mbastudent.degroote.mcmaster.ca/descriptions/b715/',note:'Open Elective. Fall evening only (Tue 19:00–21:50).'},
+  B716:{name:'Strategic Organizational Change',prereq:'B610',desc:'Managing large-scale organizational transformation. Kotter, Lewin, and ADKAR change models; resistance management; culture change; stakeholder communication and engagement strategies for organizational leaders.',instructor:'TBA',group:true,exam:false,url:'https://mbastudent.degroote.mcmaster.ca/descriptions/b716/',note:'Open Elective. Fall C01 Mon 14:30–17:20. Not listed for Winter 2027 in the current course description page.'},
+  B734:{name:'Experiential Entrepreneurship',prereq:'None',desc:'Hands-on entrepreneurship through active venture creation and development exercises. Business model design (BMC), lean startup methodology, investor pitch preparation, and navigating early-stage growth challenges.',instructor:'TBA',group:true,exam:false,url:'https://mbastudent.degroote.mcmaster.ca/descriptions/b734/',note:'Open Elective. Fall Tue 11:30.'},
+  D700:{name:'Case Analysis',prereq:'Level 1 completion',desc:'Advanced MBA case methodology and competitive case preparation. Structured frameworks for diagnosing business problems, formulating prioritized recommendations, and presenting to senior management. Prep for case competitions and consulting interviews.',instructor:'TBA',group:true,exam:false,url:'https://mbastudent.degroote.mcmaster.ca/descriptions/d700/',note:'Open Elective. Fall Thu 11:30–14:20.'},
+  K610:{name:'Digital Transformation',prereq:'None',desc:'How digital technologies transform business models and operations. Cloud computing, AI/ML applications, IoT, platform strategies, digital disruption frameworks, data governance, and managing technology-driven organizational change.',instructor:'TBA',group:true,exam:false,url:'https://mbastudent.degroote.mcmaster.ca/descriptions/k610-digital-transformation/',note:'Open Elective. Fall C01 Wed 8:30–11:20 or C02 Wed 14:30–17:20; Winter 2027 C01 Thu 14:30–17:20.'},
+  K725:{name:'Business Process Management',prereq:'O610',desc:'Business process analysis, redesign, and automation. BPMN notation, process mining, robotic process automation (RPA), ERP integration, and lean process improvement methodologies. Hands-on with process modelling tools.',instructor:'TBA',group:true,exam:false,url:'https://mbastudent.degroote.mcmaster.ca/descriptions/k725/',note:'BA Elective. Fall evening only (Mon 19:00–21:50). ⚠ Conflicts with K723 and M727.'},
+  K731:{name:'Project Management',prereq:'None',desc:'Project management principles: scope, schedule, cost, risk, quality, and stakeholder management. Agile and waterfall methodologies, Gantt charts, critical path method, earned value, and PMI/PMP certification prep.',instructor:'TBA',group:true,exam:false,url:'https://mbastudent.degroote.mcmaster.ca/descriptions/k731/',note:'Open Elective. Fall C01 Wed 11:30–14:20 or evening C02 Thu 19:00–21:50; Winter 2027 C01 Thu 14:30–17:20 or evening C02 Thu 19:00–21:50.'},
+  M610:{name:'Marketing Strategy',prereq:'None',desc:'Core marketing strategy: market analysis, consumer behaviour fundamentals, segmentation, targeting and positioning (STP), pricing strategy, product management, distribution channels, and integrated communications planning.',instructor:'TBA',group:true,exam:true,url:'https://mbastudent.degroote.mcmaster.ca/descriptions/m610/',note:'Open/Marketing prerequisite course. Winter 2027 offering is C01 Tue 8:30–11:20.'},
+  O712:{name:'Data Analytics Using Python',prereq:'O610',desc:'Python programming for business analytics: data wrangling with pandas, visualization with matplotlib/seaborn, statistical analysis, machine learning with scikit-learn, and data storytelling for business audiences. Project-based.',instructor:'TBA',group:true,exam:false,url:'https://mbastudent.degroote.mcmaster.ca/descriptions/o712/',note:'BA Elective. Fall Tue 11:30–14:20.'},
+  O715:{name:'Simulation of Mfg & Service Systems',prereq:'O610',desc:'Discrete-event simulation for business systems. Building Arena/SimPy models of queuing, manufacturing, and service operations. Variance reduction techniques, output analysis, and comparing alternative system designs.',instructor:'TBA',group:true,exam:false,url:'https://mbastudent.degroote.mcmaster.ca/descriptions/o715/',note:'BA Elective. Winter 2027 offering is C01 Wed 14:30–17:20.'},
+  O734:{name:'Supply Chain Management',prereq:'O611',desc:'End-to-end supply chain strategy: inventory optimization, supplier selection and development, logistics network design, global supply chain risk management, sustainability (green SCM), and digital supply chain technologies.',instructor:'TBA',group:true,exam:true,url:'https://mbastudent.degroote.mcmaster.ca/descriptions/o734/',note:'Open Elective. Winter 2027 offering is C01 Mon 14:30–17:20.'},
+  P611:{name:'Navigating Disruption',prereq:'Level 1 completion',desc:'Strategic management of disruptive forces: technological disruption, industry convergence, platform competition, and digital business model innovation. Case-intensive with emphasis on developing and testing strategic responses.',instructor:'TBA',group:true,exam:false,url:'https://mbastudent.degroote.mcmaster.ca/descriptions/p611-navigating-disruption/',note:'Open Elective. Not listed for Winter 2027 in the current course description page.'},
+  P615:{name:'Management Consulting Part A/B',prereq:'Level 1 completion',desc:'Introduction to the management consulting profession. Part A: problem structuring, MECE frameworks, hypothesis-driven analysis, client communication. Part B: live consulting engagement with a real client organization. Sequential — must complete Part A before Part B.',instructor:'TBA',group:true,exam:false,url:'https://mbastudent.degroote.mcmaster.ca/descriptions/p615a-management-consulting/',note:'Open Elective. Fall 2026 Part A C01 Wed 14:30–17:20; Winter 2027 Part B C01 Wed 14:30–17:20.'},
+  P715:{name:'Entrepreneurship',prereq:'None',desc:'Entrepreneurship theory and practice: opportunity recognition, business model canvas, feasibility analysis, bootstrapping, startup financing, and scaling. Suitable for students considering joining or founding early-stage ventures.',instructor:'TBA',group:true,exam:false,url:'https://mbastudent.degroote.mcmaster.ca/descriptions/p715/',note:'Marketing & Open Elective. Winter 2027 evening C01 Mon 19:00–21:50.'},
+};
+
+// ════════════════════════════════════════════════════
+// SPECIALIZATIONS
+// ════════════════════════════════════════════════════
+const SPECS = [
+  {id:'GEN',label:'General MBA',sub:'P700 + P720 + eight 700-level courses',
+   req_fall:[],req_win:[],electives:null,min_el:8,
+   url:'https://ecampusontario.pressbooks.pub/dsbmbahandbook25/chapter/general-mba/'},
+  {id:'HSM',label:'Health Services Management',sub:'Req: 1+ yr health sector exp. + advisor approval',
+   req_fall:['C711'],req_win:['C721'],
+   electives:['C727','C736','C715','C722','C755'],min_el:3,
+   url:'https://ecampusontario.pressbooks.pub/dsbmbahandbook25/chapter/health-services-management/'},
+  {id:'FIN',label:'Finance',sub:'Gateway to CFA® / CFP® designations',
+   req_fall:[],req_win:[],
+   electives:['F701','F712','F713','F717','F721','F722','F724','F725','F733','F735','F736','F741','F743'],min_el:5,
+   url:'https://ecampusontario.pressbooks.pub/dsbmbahandbook25/chapter/finance/'},
+  {id:'SBV',label:'Strategic Business Valuation',sub:'Gateway to CBV designation (CICBV)',
+   req_fall:['V700','V704'],req_win:[],
+   electives:['F712','F713','F717','F721','F724','F735'],min_el:3,
+   url:'https://ecampusontario.pressbooks.pub/dsbmbahandbook25/chapter/strategic-business-valuation/'},
+  {id:'BA',label:'Business Analytics',sub:'Gateway to INFORMS CAP designation',
+   req_fall:['K723','O701'],req_win:['O711'],
+   electives:['F741','F743','K725','M731','M733','M734','O712','O715','O734'],min_el:2,
+   url:'https://ecampusontario.pressbooks.pub/dsbmbahandbook25/chapter/business-analytics/'},
+  {id:'MKT',label:'Strategic Marketing',sub:'Careers in brand, digital & strategic marketing',
+   req_fall:['M731'],req_win:[],
+   electives:['M724','M727','M732','M733','M734','M740','M752','P715'],min_el:4,
+   url:'https://ecampusontario.pressbooks.pub/dsbmbahandbook25/chapter/strategic-marketing/'},
+];
+
+// ════════════════════════════════════════════════════
+// SCHEDULE: Fall 2026 & Winter 2027
+// type: 'req' | 'spec-req' | 'spec-el' | 'open'
+// Multiple entries per course represent cohort/section options.
+// ════════════════════════════════════════════════════
+const SCHED = {
+  fall:[
+    // Shared required
+    {code:'P700',day:'TUE',s:'14:30',e:'17:20',sec:'C01',label:'P700',type:'req',spec:null},
+    {code:'P700',day:'TUE',s:'19:00',e:'21:50',sec:'C02',label:'P700 E',type:'req',spec:null},
+    {code:'P720',day:'WED',s:'11:30',e:'14:20',sec:'C01',label:'P720',type:'req',spec:null},
+    {code:'P720',day:'WED',s:'19:00',e:'21:50',sec:'C02',label:'P720 E',type:'req',spec:null},
+
+    // HSM required/electives
+    {code:'C711',day:'TUE',s:'19:00',e:'21:50',sec:'C01',label:'C711 E',type:'spec-req',spec:'HSM'},
+    {code:'C727',day:'THU',s:'08:30',e:'11:20',sec:'C01',label:'C727',type:'spec-el',spec:'HSM'},
+    {code:'C736',day:'THU',s:'19:00',e:'21:50',sec:'C01',label:'C736 E',type:'spec-el',spec:'HSM'},
+
+    // SBV required
+    {code:'V700',day:'THU',s:'19:00',e:'21:50',sec:'C01',label:'V700 E',type:'spec-req',spec:'SBV'},
+    {code:'V704',day:'WED',s:'19:00',e:'21:50',sec:'C01',label:'V704 E',type:'spec-req',spec:'SBV'},
+
+    // Finance electives
+    {code:'F701',day:'THU',s:'08:30',e:'11:20',sec:'C01',label:'F701',type:'spec-el',spec:'FIN'},
+    {code:'F717',day:'MON',s:'14:30',e:'17:20',sec:'C01',label:'F717',type:'spec-el',spec:'FIN'},
+    {code:'F721',day:'WED',s:'08:30',e:'11:20',sec:'C01',label:'F721',type:'spec-el',spec:'FIN'},
+    {code:'F724',day:'WED',s:'14:30',e:'17:20',sec:'C01',label:'F724',type:'spec-el',spec:'FIN'},
+    {code:'F733',day:'THU',s:'19:00',e:'21:50',sec:'C01',label:'F733 E',type:'spec-el',spec:'FIN'},
+    {code:'F736',day:'MON',s:'11:30',e:'14:20',sec:'C01',label:'F736',type:'spec-el',spec:'FIN'},
+    {code:'F741',day:'TUE',s:'11:30',e:'14:20',sec:'C01',label:'F741',type:'spec-el',spec:'FIN'},
+    {code:'F741',day:'MON',s:'19:00',e:'21:50',sec:'C02',label:'F741 E',type:'spec-el',spec:'FIN'},
+    {code:'F743',day:'WED',s:'19:00',e:'21:50',sec:'C01',label:'F743 E',type:'spec-el',spec:'FIN'},
+
+    // BA required/electives
+    {code:'K723',day:'MON',s:'19:00',e:'21:50',sec:'C01',label:'K723 E',type:'spec-req',spec:'BA'},
+    {code:'O701',day:'MON',s:'11:30',e:'14:20',sec:'C01',label:'O701',type:'spec-req',spec:'BA'},
+
+    // Marketing required/electives
+    {code:'M731',day:'WED',s:'19:00',e:'21:50',sec:'C01',label:'M731 E',type:'spec-req',spec:'MKT'},
+    {code:'M724',day:'TUE',s:'19:00',e:'21:50',sec:'C01',label:'M724 E',type:'spec-el',spec:'MKT'},
+    {code:'M727',day:'MON',s:'19:00',e:'21:50',sec:'C01',label:'M727 E',type:'spec-el',spec:'MKT'},
+    {code:'M733',day:'WED',s:'11:30',e:'14:20',sec:'C01',label:'M733',type:'spec-el',spec:'MKT'},
+    {code:'M752',day:'TUE',s:'14:30',e:'17:20',sec:'C01',label:'M752',type:'spec-el',spec:'MKT'},
+
+    // Open electives
+    {code:'B712',day:'MON',s:'11:30',e:'14:20',sec:'C01',label:'B712',type:'open',spec:null},
+    {code:'B715',day:'TUE',s:'19:00',e:'21:50',sec:'C01',label:'B715 E',type:'open',spec:null},
+    {code:'B716',day:'MON',s:'14:30',e:'17:20',sec:'C01',label:'B716',type:'open',spec:null},
+    {code:'B734',day:'TUE',s:'11:30',e:'14:20',sec:'C01',label:'B734',type:'open',spec:null},
+    {code:'D700',day:'THU',s:'11:30',e:'14:20',sec:'C01',label:'D700',type:'open',spec:null},
+    {code:'K610',day:'WED',s:'08:30',e:'11:20',sec:'C01',label:'K610',type:'open',spec:null},
+    {code:'K610',day:'WED',s:'14:30',e:'17:20',sec:'C02',label:'K610',type:'open',spec:null},
+    {code:'K725',day:'MON',s:'19:00',e:'21:50',sec:'C01',label:'K725 E',type:'open',spec:null},
+    {code:'K731',day:'WED',s:'11:30',e:'14:20',sec:'C01',label:'K731',type:'open',spec:null},
+    {code:'K731',day:'THU',s:'19:00',e:'21:50',sec:'C02',label:'K731 E',type:'open',spec:null},
+    {code:'O712',day:'TUE',s:'11:30',e:'14:20',sec:'C01',label:'O712',type:'open',spec:null},
+    {code:'P615',day:'WED',s:'14:30',e:'17:20',sec:'C01',label:'P615 A',type:'open',spec:null},
+  ],
+  winter:[
+    // Shared required
+    {code:'P700',day:'THU',s:'14:30',e:'17:20',sec:'C01',label:'P700',type:'req',spec:null},
+    {code:'P700',day:'THU',s:'19:00',e:'21:50',sec:'C02',label:'P700 E',type:'req',spec:null},
+    {code:'P720',day:'TUE',s:'11:30',e:'14:20',sec:'C01',label:'P720',type:'req',spec:null},
+    {code:'P720',day:'TUE',s:'19:00',e:'21:50',sec:'C02',label:'P720 E',type:'req',spec:null},
+
+    // HSM required/electives
+    {code:'C721',day:'WED',s:'11:30',e:'14:20',sec:'C01',label:'C721',type:'spec-req',spec:'HSM'},
+    {code:'C722',day:'THU',s:'11:30',e:'14:20',sec:'C01',label:'C722',type:'spec-el',spec:'HSM'},
+    {code:'C755',day:'WED',s:'19:00',e:'21:50',sec:'C01',label:'C755 E',type:'spec-el',spec:'HSM'},
+
+    // Finance electives
+    {code:'F713',day:'MON',s:'19:00',e:'21:50',sec:'C01',label:'F713 E',type:'spec-el',spec:'FIN'},
+    {code:'F722',day:'THU',s:'11:30',e:'14:20',sec:'C01',label:'F722',type:'spec-el',spec:'FIN'},
+    {code:'F725',day:'MON',s:'14:30',e:'17:20',sec:'C01',label:'F725',type:'spec-el',spec:'FIN'},
+    {code:'F735',day:'WED',s:'11:30',e:'14:20',sec:'C01',label:'F735',type:'spec-el',spec:'FIN'},
+
+    // BA required/electives
+    {code:'O711',day:'TUE',s:'19:00',e:'21:50',sec:'C01',label:'O711 E',type:'spec-req',spec:'BA'},
+
+    // Marketing electives
+    {code:'M734',day:'TUE',s:'14:30',e:'17:20',sec:'C01',label:'M734',type:'spec-el',spec:'MKT'},
+    {code:'M740',day:'WED',s:'11:30',e:'14:20',sec:'C01',label:'M740',type:'spec-el',spec:'MKT'},
+    {code:'M752',day:'WED',s:'19:00',e:'21:50',sec:'C01',label:'M752 E',type:'spec-el',spec:'MKT'},
+
+    // Open electives
+    {code:'B712',day:'MON',s:'19:00',e:'21:50',sec:'C01',label:'B712 E',type:'open',spec:null},
+    {code:'K610',day:'THU',s:'14:30',e:'17:20',sec:'C01',label:'K610',type:'open',spec:null},
+    {code:'K731',day:'THU',s:'14:30',e:'17:20',sec:'C01',label:'K731',type:'open',spec:null},
+    {code:'K731',day:'THU',s:'19:00',e:'21:50',sec:'C02',label:'K731 E',type:'open',spec:null},
+    {code:'M610',day:'TUE',s:'08:30',e:'11:20',sec:'C01',label:'M610',type:'open',spec:null},
+    {code:'O715',day:'WED',s:'14:30',e:'17:20',sec:'C01',label:'O715',type:'open',spec:null},
+    {code:'O734',day:'MON',s:'14:30',e:'17:20',sec:'C01',label:'O734',type:'open',spec:null},
+    {code:'P615',day:'WED',s:'14:30',e:'17:20',sec:'C01',label:'P615 B',type:'open',spec:null},
+    {code:'P715',day:'MON',s:'19:00',e:'21:50',sec:'C01',label:'P715 E',type:'open',spec:null},
+  ]
+};
+
+// ════════════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════════════
+let term = 'fall';
+let spec = 'GEN';
+const sel = {fall:{}, winter:{}};        // elective selections: {COURSE: SECTION}
+const reqSel = {fall:{}, winter:{}};     // required cohort selections: {COURSE: SECTION}
+let warnTimer = null;
+
+// Assign a color per course code (stable across rebuilds)
+const ecMap = {};
+let ecIdx = 0;
+function ec(code){
+  if(!ecMap[code]) ecMap[code] = ECOLORS[ecIdx++ % ECOLORS.length];
+  return ecMap[code];
+}
+Object.keys(COURSES).forEach(c=>ec(c));
+
+// ════════════════════════════════════════════════════
+// TIME HELPERS
+// ════════════════════════════════════════════════════
+function toMin(t){const[h,m]=t.split(':').map(Number);return h*60+m}
+function topPx(t){return ((toMin(t)-GS_MINS)/30)*ROW_H}
+function htPx(s,e){return ((toMin(e)-toMin(s))/30)*ROW_H}
+function fmt(t){
+  const[h,m]=t.split(':').map(Number);
+  const ap=h>=12?'PM':'AM';
+  const hh=h>12?h-12:(h===0?12:h);
+  return `${hh}:${m.toString().padStart(2,'0')} ${ap}`;
+}
+function entryLabel(entry){return `${entry.sec}${entry.label&&entry.label.includes(' E')?' E':''}`}
+function entryMeta(entry){return `${entry.day} · ${fmt(entry.s)} – ${fmt(entry.e)}`}
+function courseTitle(code){return `${code} — ${COURSES[code]?COURSES[code].name:code}`}
+
+// ════════════════════════════════════════════════════
+// SCHEDULE / SELECTION HELPERS
+// ════════════════════════════════════════════════════
+function offerings(t,code){return SCHED[t].filter(c=>c.code===code)}
+function offering(t,code,sec){return offerings(t,code).find(c=>c.sec===sec)||offerings(t,code)[0]||null}
+function selectedSpec(){return SPECS.find(s=>s.id===spec)}
+function currentSpecReq(){
+  const sp=selectedSpec();
+  return term==='fall'?sp.req_fall:sp.req_win;
+}
+function allSpecReq(){
+  const sp=selectedSpec();
+  return [...sp.req_fall.map(c=>({code:c,when:'Fall 2026'})),...sp.req_win.map(c=>({code:c,when:'Winter 2027'}))];
+}
+function generalElectives(){
+  const codes=new Set();
+  [...SCHED.fall,...SCHED.winter].forEach(e=>{
+    if(e.code!=='P700'&&e.code!=='P720'&&/^\D?\d?7\d\d|[A-Z]\d?7\d\d/.test(e.code)) codes.add(e.code);
+  });
+  return [...codes].sort();
+}
+function specElectiveCodes(){
+  const sp=selectedSpec();
+  return sp.id==='GEN'?generalElectives():sp.electives;
+}
+function openElectiveCodesThisTerm(){
+  const codes=[];
+  SCHED[term].filter(c=>c.type==='open').forEach(e=>{if(!codes.includes(e.code))codes.push(e.code)});
+  return codes;
+}
+function ensureReqDefaults(){
+  ['fall','winter'].forEach(t=>{
+    const shared=['P700','P720'];
+    const sp=selectedSpec();
+    const req=[...shared,...(t==='fall'?sp.req_fall:sp.req_win)];
+    req.forEach(code=>{
+      if(!reqSel[t][code]||!offering(t,code,reqSel[t][code])){
+        const first=offerings(t,code)[0];
+        if(first) reqSel[t][code]=first.sec;
+      }
+    });
+  });
+}
+function isRequiredCode(code){
+  return code==='P700'||code==='P720'||currentSpecReq().includes(code);
+}
+function activeRequiredEntries(){
+  ensureReqDefaults();
+  return ['P700','P720',...currentSpecReq()]
+    .map(code=>offering(term,code,reqSel[term][code]))
+    .filter(Boolean);
+}
+function activeElectiveEntries(){
+  return Object.entries(sel[term]).map(([code,sec])=>offering(term,code,sec)).filter(Boolean);
+}
+function activeEntries(){return [...activeRequiredEntries(),...activeElectiveEntries()]}
+function overlaps(a,b){
+  return a.day===b.day && Math.max(toMin(a.s),toMin(b.s)) < Math.min(toMin(a.e),toMin(b.e));
+}
+function conflictForEntry(entry,excludeCode=null){
+  for(const other of activeEntries()){
+    if(excludeCode && other.code===excludeCode) continue;
+    if(overlaps(entry,other)) return other;
+  }
+  return null;
+}
+function showWarn(msg){
+  const note=document.getElementById('ftr-note');
+  if(!note) return;
+  if(warnTimer) clearTimeout(warnTimer);
+  note.className='ftr-note warn';
+  note.textContent=msg;
+  warnTimer=setTimeout(updateFooter,4500);
+}
+function selectRequired(code,newSec){
+  const entry=offering(term,code,newSec);
+  if(!entry) return;
+  const c=conflictForEntry(entry,code);
+  if(c){
+    showWarn(`⚠ ${entry.label||code} ${entryLabel(entry)} conflicts with ${c.label||c.code} ${entryLabel(c)} (${entry.day} ${fmt(entry.s)}–${fmt(entry.e)}).`);
+    buildSidebar();buildCal();
+    return;
+  }
+  reqSel[term][code]=newSec;
+  buildSidebar();buildCal();
+}
+function selectElective(code,sec){
+  const entry=offering(term,code,sec);
+  if(!entry) return false;
+  const c=conflictForEntry(entry,code);
+  if(c){
+    showWarn(`⚠ ${entry.label||code} ${entryLabel(entry)} conflicts with ${c.label||c.code} ${entryLabel(c)} (${entry.day} ${fmt(entry.s)}–${fmt(entry.e)}).`);
+    return false;
+  }
+  sel[term][code]=sec;
+  return true;
+}
+
+// ════════════════════════════════════════════════════
+// SIDEBAR
+// ════════════════════════════════════════════════════
+function buildSidebar(){
+  ensureReqDefaults();
+  const sp=selectedSpec();
+
+  // Spec radios
+  const sl=document.getElementById('spec-list');
+  sl.innerHTML='';
+  SPECS.forEach(s=>{
+    const lbl=document.createElement('label');
+    lbl.className='spec-row';
+    const rb=document.createElement('input');
+    rb.type='radio';rb.name='spec';rb.checked=s.id===spec;
+    rb.addEventListener('change',()=>{spec=s.id;sel.fall={};sel.winter={};ensureReqDefaults();buildSidebar();buildCal()});
+    lbl.appendChild(rb);
+    const d=document.createElement('div');
+    d.innerHTML=`<div class="spec-name">${s.label}</div><div class="spec-sub">${s.sub}</div>`;
+    lbl.appendChild(d);
+    sl.appendChild(lbl);
+  });
+
+  // Required
+  const rl=document.getElementById('req-list');
+  rl.innerHTML='';
+  const reqList=[
+    {code:'P700',when:'Both terms'},
+    {code:'P720',when:'Both terms'},
+    ...allSpecReq(),
+  ];
+  reqList.forEach(r=>buildReqItem(rl,r.code,r.when));
+
+  // Spec/general electives
+  document.getElementById('spec-el-hint').textContent=sp.id==='GEN'?`pick ≥${sp.min_el} across both terms`:`pick ≥${sp.min_el} across both terms`;
+  const sel_l=document.getElementById('spec-el-list');
+  sel_l.innerHTML='';
+  specElectiveCodes().forEach(code=>buildCourseChoice(sel_l,code));
+
+  // Open electives
+  const oel=document.getElementById('open-el-list');
+  oel.innerHTML='';
+  if(sp.id!=='GEN') openElectiveCodesThisTerm().forEach(code=>buildCourseChoice(oel,code));
+}
+
+function buildReqItem(container,code,when){
+  const cd=COURSES[code];
+  const div=document.createElement('div');
+  div.className='req-item';
+  const body=document.createElement('div');
+  const off=offerings(term,code);
+  const chosen=reqSel[term][code]||(off[0]?off[0].sec:null);
+  let meta=when;
+  if(off.length) meta=`${when} · ${entryMeta(offering(term,code,chosen))}`;
+  body.innerHTML=`<div class="req-name">${code} — ${cd?cd.name:code}</div><div class="req-meta">${meta}</div>`;
+  if(off.length>1){
+    const select=cohortSelect(code,chosen);
+    select.addEventListener('change',e=>selectRequired(code,e.target.value));
+    body.appendChild(select);
+  }
+  div.innerHTML='<div class="req-dot"></div>';
+  div.appendChild(body);
+  container.appendChild(div);
+}
+
+function buildCourseChoice(container,code){
+  const off=offerings(term,code);
+  if(!off.length){
+    const div=document.createElement('label');
+    div.className='el-item';div.style.opacity='.4';
+    div.innerHTML=`<input type="checkbox" disabled><div class="el-body"><div class="el-name">${courseTitle(code)}</div><div class="el-meta">Not offered this term</div><span class="el-badge off">Unavailable</span></div>`;
+    container.appendChild(div);
+    return;
+  }
+
+  const checked=Object.prototype.hasOwnProperty.call(sel[term],code);
+  const chosen=checked?sel[term][code]:off[0].sec;
+  const entry=offering(term,code,chosen);
+  const isEve=entry.s>='19:00';
+
+  const lbl=document.createElement('label');
+  lbl.className='el-item';
+
+  const cb=document.createElement('input');
+  cb.type='checkbox';cb.checked=checked;
+  cb.addEventListener('change',()=>{
+    const select=lbl.querySelector('select');
+    const sec=select?select.value:chosen;
+    if(cb.checked){
+      if(!selectElective(code,sec)){cb.checked=false;buildSidebar();buildCal();return;}
+    } else {
+      delete sel[term][code];
+    }
+    buildSidebar();buildCal();
+  });
+  lbl.appendChild(cb);
+
+  const body=document.createElement('div');
+  body.className='el-body';
+  body.innerHTML=`<div class="el-name">${courseTitle(code)}</div><div class="el-meta">${entryMeta(entry)}</div>`;
+
+  if(off.length>1){
+    const select=cohortSelect(code,chosen);
+    select.addEventListener('click',e=>e.stopPropagation());
+    select.addEventListener('change',e=>{
+      e.stopPropagation();
+      if(Object.prototype.hasOwnProperty.call(sel[term],code)){
+        if(!selectElective(code,e.target.value)){buildSidebar();buildCal();return;}
+        buildSidebar();buildCal();
+      }
+    });
+    body.appendChild(select);
+  }
+  if(isEve){
+    const b=document.createElement('span');
+    b.className='el-badge eve';b.textContent='Evening';
+    body.appendChild(b);
+  }
+  lbl.appendChild(body);
+  container.appendChild(lbl);
+}
+
+function cohortSelect(code,chosen){
+  const select=document.createElement('select');
+  select.className='cohort-select';
+  select.setAttribute('aria-label',`${code} cohort`);
+  offerings(term,code).forEach(e=>{
+    const opt=document.createElement('option');
+    opt.value=e.sec;opt.selected=e.sec===chosen;
+    opt.textContent=`${entryLabel(e)} · ${entryMeta(e)}`;
+    select.appendChild(opt);
+  });
+  return select;
+}
+
+// ════════════════════════════════════════════════════
+// CALENDAR
+// ════════════════════════════════════════════════════
+function buildCal(){
+  const bg   = document.getElementById('cal-bg');
+  const blks = document.getElementById('cal-blocks');
+  const wrap = document.getElementById('cal-grid-wrap');
+  const totalH = SLOTS * ROW_H;
+
+  bg.innerHTML='';
+  blks.innerHTML='';
+  wrap.style.height = totalH + 'px';
+  blks.style.height = totalH + 'px';
+
+  bg.style.cssText=`display:grid;grid-template-columns:54px repeat(5,1fr);position:absolute;top:0;left:0;right:0;bottom:0`;
+
+  for(let s=0;s<SLOTS;s++){
+    const mins=GS_MINS+s*30;
+    const h=Math.floor(mins/60), m=mins%60;
+    const isHour=m===0;
+
+    const tl=document.createElement('div');
+    tl.className='bg-tl';
+    tl.style.height=ROW_H+'px';
+    if(isHour && h>GS_H){
+      const sp=document.createElement('span');
+      sp.style.cssText='font-size:9px;color:var(--tx3);position:relative;top:-5px';
+      sp.textContent=fmt(`${h}:00`);
+      tl.appendChild(sp);
+    }
+    bg.appendChild(tl);
+
+    for(let d=0;d<5;d++){
+      const cell=document.createElement('div');
+      cell.className='bg-cell'+(isHour?' hr':'');
+      cell.style.height=ROW_H+'px';
+      bg.appendChild(cell);
+    }
+  }
+
+  const colW = 20;
+  activeEntries().forEach(entry=>{
+    const{code,day,s,e}=entry;
+    const isReq = isRequiredCode(code);
+    const di=DAYS.indexOf(day);
+    if(di===-1) return;
+
+    const top=topPx(s);
+    const ht=htPx(s,e);
+    const cd=COURSES[code];
+    const name=cd?cd.name:code;
+
+    const blk=document.createElement('div');
+    blk.className='blk '+(isReq?'req':ec(code));
+    blk.style.cssText=`
+      position:absolute;
+      top:${top+2}px;
+      height:${ht-4}px;
+      left:calc(${di*colW}% + 2px);
+      width:calc(${colW}% - 4px);
+    `;
+    blk.innerHTML=`
+      <div class="blk-code">${entry.label||code} · ${entry.sec}</div>
+      <div class="blk-name">${name}</div>
+      <div class="blk-time">${fmt(s)} – ${fmt(e)}</div>
+    `;
+
+    const ib=document.createElement('div');
+    ib.className='blk-i';ib.textContent='i';
+    ib.addEventListener('mouseenter',ev=>{ev.stopPropagation();showPop(ev,code,entry,isReq,!isReq)});
+    ib.addEventListener('mouseleave',()=>setTimeout(()=>{if(!document.getElementById('pop').matches(':hover'))hidePop()},120));
+    blk.appendChild(ib);
+    blks.appendChild(blk);
+  });
+
+  updateFooter();
+  requestAnimationFrame(()=>{
+    const sc=document.getElementById('cal-scroll');
+    if(sc) sc.scrollTop=ROW_H;
+  });
+}
+
+// ════════════════════════════════════════════════════
+// POPOVER
+// ════════════════════════════════════════════════════
+function showPop(ev,code,entry,isReq,isSpEl){
+  const pop=document.getElementById('pop');
+  const cd=COURSES[code];
+  const name=cd?cd.name:code;
+  const tag=isReq?'<span class="pop-tag req">Required</span>'
+    :isSpEl?'<span class="pop-tag spec">Elective</span>'
+    :'<span class="pop-tag open">Open Elective</span>';
+
+  const gwIcon = cd?(cd.group?'✓ Yes':'✗ No'):'—';
+  const exIcon = cd?(cd.exam?'✓ Yes':'✗ No'):'—';
+  const prereq = cd?cd.prereq:'See course page';
+  const desc   = cd?cd.desc:'See course page for full description.';
+  const note   = cd&&cd.note?`<div class="pop-note">📌 ${cd.note}</div>`:'';
+  const link   = cd&&cd.url?`<a class="pop-link" href="${cd.url}" target="_blank">View full course description ↗</a>`:'';
+
+  pop.innerHTML=`
+    <div class="pop-code">${entry.label||code} ${entry.s>='19:00'?'<span style="font-size:9px;color:#B890D8;background:rgba(130,70,190,.2);border:1px solid rgba(130,70,190,.3);border-radius:3px;padding:1px 5px;margin-left:4px">Evening</span>':''}</div>
+    <div class="pop-title">${name}</div>
+    <div class="pop-row"><span class="pop-lbl">When</span><span class="pop-val">${entry.day} · ${fmt(entry.s)} – ${fmt(entry.e)} · ${entryLabel(entry)}</span></div>
+    <div class="pop-row"><span class="pop-lbl">Location</span><span class="pop-val">Ron Joyce Centre (RJC), Burlington</span></div>
+    <div class="pop-row"><span class="pop-lbl">Instructor</span><span class="pop-val">${cd?cd.instructor:'TBA'}</span></div>
+    <div class="pop-row"><span class="pop-lbl">Prereqs</span><span class="pop-val">${prereq}</span></div>
+    <div class="pop-row"><span class="pop-lbl">Group work</span><span class="pop-val">${gwIcon}</span></div>
+    <div class="pop-row"><span class="pop-lbl">Final exam</span><span class="pop-val">${exIcon}</span></div>
+    <div class="pop-div"></div>
+    <div class="pop-desc">${desc}</div>
+    ${note}
+    ${tag}
+    ${link}
+  `;
+
+  const rect=ev.target.getBoundingClientRect();
+  pop.style.left=(rect.right+10)+'px';
+  pop.style.top=(rect.top-20)+'px';
+  pop.classList.add('show');
+
+  requestAnimationFrame(()=>{
+    const pr=pop.getBoundingClientRect();
+    if(pr.right>window.innerWidth-8)  pop.style.left=(rect.left-pr.width-10)+'px';
+    if(pr.bottom>window.innerHeight-8) pop.style.top=(window.innerHeight-pr.height-8)+'px';
+    if(pr.top<8) pop.style.top='8px';
+  });
+}
+
+function hidePop(){document.getElementById('pop').classList.remove('show')}
+document.getElementById('pop').addEventListener('mouseleave',hidePop);
+
+// ════════════════════════════════════════════════════
+// FOOTER
+// ════════════════════════════════════════════════════
+function updateFooter(){
+  const sp=selectedSpec();
+  const reqCount=2+currentSpecReq().length;
+  document.getElementById('cnt-req').textContent=reqCount;
+  document.getElementById('cnt-el').textContent=Object.keys(sel[term]).length;
+  const total=Object.keys(sel.fall).length+Object.keys(sel.winter).length;
+  const note=document.getElementById('ftr-note');
+  if(total>=sp.min_el){
+    note.className='ftr-note ok';
+    note.textContent=`✓ ${total} elective${total>1?'s':''} selected across both terms (≥${sp.min_el} required — met)`;
+  } else {
+    note.className='ftr-note';
+    note.textContent=`${total}/${sp.min_el}+ electives needed across both terms`;
+  }
+}
+
+// ════════════════════════════════════════════════════
+// TERM SWITCH
+// ════════════════════════════════════════════════════
+function setTerm(t){
+  term=t;
+  document.querySelectorAll('.tbt').forEach(b=>b.classList.remove('active'));
+  document.querySelector(`[onclick="setTerm('${t}')"]`).classList.add('active');
+  buildSidebar();buildCal();
+}
+
+// ════════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════════
+ensureReqDefaults();
+buildSidebar();
+buildCal();
+</script>
+</body>
+</html>
