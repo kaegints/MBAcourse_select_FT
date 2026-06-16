@@ -17,7 +17,7 @@
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:13px;background:var(--bg);color:var(--tx);height:100vh;display:flex;flex-direction:column;overflow:hidden}
 
 /* ── HEADER ── */
-.hdr{background:var(--maroon-dk);border-bottom:3px solid var(--gold);padding:10px 18px;display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;flex-shrink:0;gap:10px;flex-wrap:nowrap}
+.hdr{background:var(--maroon-dk);border-bottom:3px solid var(--gold);padding:10px 18px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:10px;flex-wrap:wrap}
 .hdr h1{font-size:14px;font-weight:600;color:#fff;margin-bottom:1px}
 .hdr .sub{font-size:10.5px;color:rgba(255,255,255,.45)}
 .term-tabs{display:flex;gap:3px;background:rgba(0,0,0,.3);padding:3px;border-radius:7px}
@@ -136,12 +136,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-siz
 
 
 /* ── SAVED PLANS ── */
-.top-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;width:100%;justify-content:flex-start}
-.nav-toggle{padding:4px 10px;border-radius:5px;border:1px solid rgba(196,154,26,.35);background:rgba(196,154,26,.12);color:#E0C36A;font-size:11.5px;font-weight:700;cursor:pointer;transition:all .12s}
-.nav-toggle:hover{background:rgba(196,154,26,.22);color:#F2D77A}
-.body.nav-collapsed .sb{width:0;border-right:0;overflow:hidden}
-.body.nav-collapsed .sb-inner{display:none}
-.sb{transition:width .16s ease,border-color .16s ease}
+.top-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .plan-actions{display:flex;gap:4px;background:rgba(0,0,0,.22);padding:3px;border-radius:7px}
 .plan-btn{padding:4px 10px;border-radius:5px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:rgba(255,255,255,.75);font-size:11.5px;font-weight:600;cursor:pointer;transition:all .12s}
 .plan-btn:hover{background:rgba(255,255,255,.13);color:#fff}
@@ -184,7 +179,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-siz
     <div class="sub">Fall 2026 &amp; Winter 2027 · Full-Time (No Co-op) · Ron Joyce Centre, Burlington</div>
   </div>
   <div class="top-actions">
-    <button class="nav-toggle" id="nav-toggle" onclick="toggleNavPanel()" aria-pressed="false">Hide Panel</button>
     <div class="term-tabs">
       <button class="tbt active" onclick="setTerm('fall')">Fall 2026</button>
       <button class="tbt" onclick="setTerm('winter')">Winter 2027</button>
@@ -196,7 +190,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-siz
   </div>
 </div>
 
-<div class="body" id="main-body">
+<div class="body">
   <div class="sb">
     <div class="sb-inner" id="sb-inner">
       <div class="sb-sec">
@@ -270,7 +264,7 @@ const GS_MIN  = 0;    // grid start minute
 const GS_MINS = GS_H * 60 + GS_MIN;
 const DAYS    = ['MON','TUE','WED','THU','FRI'];
 const ECOLORS = ['ec0','ec1','ec2','ec3','ec4','ec5','ec6','ec7'];
-const EXCLUDED_ELECTIVES = new Set(['K610','P615']);
+const EXCLUDED_ELECTIVES = new Set(['K610','P615','M610']);
 
 // ════════════════════════════════════════════════════
 // COURSE DATABASE
@@ -289,7 +283,7 @@ const COURSES = {
   // ── HSM ELECTIVES ────────────────────────────────
   C727:{name:'Pharma/Biotech Business Issues',prereq:'None listed',desc:'Strategic, regulatory, and commercial challenges in pharma and biotech industries. Covers drug development pipeline economics, IP strategy, pricing, market access, and public–private partnerships in healthcare innovation.',instructor:'TBA',group:true,exam:false,url:'https://mbastudent.degroote.mcmaster.ca/descriptions/c727/',note:'HSM Elective. Fall only (Thu 8:30–11:20).'},
   C736:{name:'Quality Mgmt in Health Services',prereq:'None listed',desc:'Quality improvement frameworks (Lean, Six Sigma, Balanced Scorecard, PDSA) applied to healthcare organizations. Topics: patient safety culture, accreditation, incident analysis, root cause analysis, and building high-reliability organizations.',instructor:'TBA',group:true,exam:false,url:'https://mbastudent.degroote.mcmaster.ca/descriptions/c736/',note:'HSM Elective. Fall evening section only (Thu 19:00–21:50). No daytime conflict risk.'},
-  C715:{name:'Health Care Funding & Resource Allocation',prereq:'None listed',desc:'Health system financing models and allocation mechanisms. Global comparisons (Canada, US, UK, Europe), capitation, DRGs, global budgets, needs-based allocation, priority-setting frameworks, and equity in resource distribution.',instructor:'TBA',group:true,exam:false,url:'https://mbastudent.degroote.mcmaster.ca/descriptions/c715/',note:'HSM Elective. Winter only (Thu 8:30–11:20).'},
+  C715:{name:'Health Care Funding & Resource Allocation',prereq:'None listed',desc:'Health system financing models and allocation mechanisms. Global comparisons (Canada, US, UK, Europe), capitation, DRGs, global budgets, needs-based allocation, priority-setting frameworks, and equity in resource distribution.',instructor:'TBA',group:true,exam:false,url:'https://mbastudent.degroote.mcmaster.ca/descriptions/c715/',note:'HSM Elective. Winter 2027 offering is evening C01 Tue 19:00–21:50.'},
   C722:{name:'Management of Population Health',prereq:'None listed',desc:'Frameworks for improving health outcomes at population scale. Social determinants of health, chronic disease management programs, health equity, community health partnership models, and intersectoral collaboration.',instructor:'TBA',group:true,exam:false,url:'https://mbastudent.degroote.mcmaster.ca/descriptions/c722/',note:'HSM Elective. Winter 2027 offering is C01 Thu 11:30–14:20.'},
   C755:{name:'Analytics & Decision-Making in Healthcare',prereq:'None listed',desc:'Quantitative and data analytics tools applied to health management decisions. Performance dashboards, outcome measurement, evidence-based management, clinical metrics, and decision-support systems for health administrators.',instructor:'TBA',group:true,exam:false,url:'https://mbastudent.degroote.mcmaster.ca/descriptions/c755/',note:'HSM Elective. Winter 2027 offering is evening C01 Wed 19:00–21:50.'},
 
@@ -438,6 +432,7 @@ const SCHED = {
 
     // HSM required/electives
     {code:'C721',day:'WED',s:'11:30',e:'14:20',sec:'C01',label:'C721',type:'spec-req',spec:'HSM'},
+    {code:'C715',day:'TUE',s:'19:00',e:'21:50',sec:'C01',label:'C715 E',type:'spec-el',spec:'HSM'},
     {code:'C722',day:'THU',s:'11:30',e:'14:20',sec:'C01',label:'C722',type:'spec-el',spec:'HSM'},
     {code:'C755',day:'WED',s:'19:00',e:'21:50',sec:'C01',label:'C755 E',type:'spec-el',spec:'HSM'},
 
@@ -458,9 +453,7 @@ const SCHED = {
     // Open electives
     {code:'B712',day:'MON',s:'19:00',e:'21:50',sec:'C01',label:'B712 E',type:'open',spec:null},
     {code:'K731',day:'THU',s:'14:30',e:'17:20',sec:'C01',label:'K731',type:'open',spec:null},
-    {code:'K731',day:'THU',s:'19:00',e:'21:50',sec:'C02',label:'K731 E',type:'open',spec:null},
-    {code:'M610',day:'TUE',s:'08:30',e:'11:20',sec:'C01',label:'M610',type:'open',spec:null},
-    {code:'O715',day:'WED',s:'14:30',e:'17:20',sec:'C01',label:'O715',type:'open',spec:null},
+    {code:'K731',day:'THU',s:'19:00',e:'21:50',sec:'C02',label:'K731 E',type:'open',spec:null},    {code:'O715',day:'WED',s:'14:30',e:'17:20',sec:'C01',label:'O715',type:'open',spec:null},
     {code:'O734',day:'MON',s:'14:30',e:'17:20',sec:'C01',label:'O734',type:'open',spec:null},
     {code:'P715',day:'MON',s:'19:00',e:'21:50',sec:'C01',label:'P715 E',type:'open',spec:null},
   ]
@@ -475,9 +468,7 @@ const sel = {fall:{}, winter:{}};        // elective selections: {COURSE: SECTIO
 const reqSel = {fall:{}, winter:{}};     // required cohort selections: {COURSE: SECTION}
 let warnTimer = null;
 const STORAGE_KEY = 'degroote_mba_saved_plans_v1';
-const NAV_KEY = 'degroote_mba_nav_collapsed_v1';
 let savedPlans = [];
-let navCollapsed = false;
 
 // Assign a color per course code (stable across rebuilds)
 const ecMap = {};
@@ -503,6 +494,7 @@ function fmt(t){
 function entryLabel(entry){return `${entry.sec}${entry.label&&entry.label.includes(' E')?' E':''}`}
 function entryMeta(entry){return `${entry.day} · ${fmt(entry.s)} – ${fmt(entry.e)}`}
 function courseTitle(code){return `${code} — ${COURSES[code]?COURSES[code].name:code}`}
+function isExcludedElective(code){return EXCLUDED_ELECTIVES.has(code)||/^[A-Z]\d?610$/.test(code)}
 
 // ════════════════════════════════════════════════════
 // SCHEDULE / SELECTION HELPERS
@@ -521,17 +513,17 @@ function allSpecReq(){
 function generalElectives(){
   const codes=new Set();
   [...SCHED.fall,...SCHED.winter].forEach(e=>{
-    if(!['P700','P720'].includes(e.code) && !EXCLUDED_ELECTIVES.has(e.code) && /^[A-Z]\d?7\d\d$/.test(e.code)) codes.add(e.code);
+    if(!['P700','P720'].includes(e.code) && !isExcludedElective(e.code) && /^[A-Z]\d?7\d\d$/.test(e.code)) codes.add(e.code);
   });
   return [...codes].sort();
 }
 function specElectiveCodes(){
   const sp=selectedSpec();
-  return sp.id==='GEN'?generalElectives():sp.electives;
+  return sp.id==='GEN'?generalElectives():sp.electives.filter(code=>!isExcludedElective(code));
 }
 function openElectiveCodesThisTerm(){
   const codes=[];
-  SCHED[term].filter(c=>c.type==='open'&&!EXCLUDED_ELECTIVES.has(c.code)).forEach(e=>{if(!codes.includes(e.code))codes.push(e.code)});
+  SCHED[term].filter(c=>c.type==='open'&&!isExcludedElective(c.code)).forEach(e=>{if(!codes.includes(e.code))codes.push(e.code)});
   return codes;
 }
 function ensureReqDefaults(){
@@ -604,36 +596,13 @@ function selectElective(code,sec){
 
 
 // ════════════════════════════════════════════════════
-// NAVIGATION PANEL TOGGLE
-// ════════════════════════════════════════════════════
-function applyNavPanelState(){
-  const main=document.getElementById('main-body');
-  const btn=document.getElementById('nav-toggle');
-  if(main) main.classList.toggle('nav-collapsed',navCollapsed);
-  if(btn){
-    btn.textContent=navCollapsed?'Show Panel':'Hide Panel';
-    btn.setAttribute('aria-pressed',navCollapsed?'true':'false');
-  }
-  hidePop();
-}
-function loadNavPanelState(){
-  try{navCollapsed=localStorage.getItem(NAV_KEY)==='1'}catch(e){navCollapsed=false}
-  applyNavPanelState();
-}
-function toggleNavPanel(){
-  navCollapsed=!navCollapsed;
-  try{localStorage.setItem(NAV_KEY,navCollapsed?'1':'0')}catch(e){}
-  applyNavPanelState();
-}
-
-// ════════════════════════════════════════════════════
 // SAVED PLANS
 // ════════════════════════════════════════════════════
 function cloneObj(obj){return JSON.parse(JSON.stringify(obj||{}))}
 function cleanSelectionsForTerm(t,obj){
   const cleaned={};
   Object.entries(obj||{}).forEach(([code,sec])=>{
-    if(!EXCLUDED_ELECTIVES.has(code)&&offering(t,code,sec)) cleaned[code]=sec;
+    if(!isExcludedElective(code)&&offering(t,code,sec)) cleaned[code]=sec;
   });
   return cleaned;
 }
@@ -672,7 +641,7 @@ function planEntryText(t,code,sec){
   return `${e.label||code} ${entryLabel(e)} (${entryMeta(e)})`;
 }
 function planCourseList(t,obj){
-  const vals=Object.entries(obj||{}).filter(([code,sec])=>!EXCLUDED_ELECTIVES.has(code)&&offering(t,code,sec));
+  const vals=Object.entries(obj||{}).filter(([code,sec])=>!isExcludedElective(code)&&offering(t,code,sec));
   if(!vals.length) return 'None selected';
   return vals.map(([code,sec])=>planEntryText(t,code,sec)).join('; ');
 }
@@ -886,7 +855,7 @@ function buildReqItem(container,code,when){
 }
 
 function buildCourseChoice(container,code){
-  if(EXCLUDED_ELECTIVES.has(code)) return;
+  if(isExcludedElective(code)) return;
   const off=offerings(term,code);
   if(!off.length){
     const div=document.createElement('label');
@@ -1122,7 +1091,6 @@ function setTerm(t){
 // ════════════════════════════════════════════════════
 loadSavedPlans();
 ensureReqDefaults();
-loadNavPanelState();
 buildSidebar();
 buildCal();
 renderSavedPlans();
